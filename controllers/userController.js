@@ -47,14 +47,26 @@ const signup = async (req, res, next) => {
   try {
     await newUser.save();
   } catch (err) {
-    // const error = new HttpError(
-    //   "Unable to sign up right now, please try again later.",
-    //   500
-    // );
-    return next(err);
+    const error = new HttpError(
+      "Unable to sign up right now, please try again later.",
+      500
+    );
   }
 
-  res.status(201).json({ userId: newUser.id, name: newUser.name });
+  let token;
+  try {
+    token = jwt.sign(
+      { userId: newUser.id, email: newUser.email },
+      process.env.DB_KEY,
+      { expiresIn: "1h" }
+    );
+  } catch (err) {
+    return next(new HttpError("Signing in failed, please try again", 500));
+  }
+
+  res
+    .status(201)
+    .json({ userId: newUser.id, name: newUser.name, token: token });
 };
 
 const login = async (req, res, next) => {
@@ -89,6 +101,17 @@ const login = async (req, res, next) => {
         422
       )
     );
+  }
+
+  let token;
+  try {
+    token = jwt.sign(
+      { userId: existingUser.id, email: existingUser.email },
+      process.env.DB_KEY,
+      { expiresIn: "1h" }
+    );
+  } catch (err) {
+    return next(new HttpError("Signing in failed, please try again", 500));
   }
 
   res.status(201).json({
