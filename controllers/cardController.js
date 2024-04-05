@@ -3,6 +3,39 @@ const HttpError = require("../models/http-error");
 const Card = require("../models/card");
 const User = require("../models/users");
 const { default: mongoose } = require("mongoose");
+const statementGenerator = require("../statementGenerator");
+const card = require("../models/card");
+
+const vendor = [
+  { name: "Flipkart", type: "E-Commerce" },
+  { name: "Amazon", type: "E-Commerce" },
+  { name: "Lulu Hypermarket", type: "Groceries" },
+  { name: "Paragon Restaurant", type: "Dining" },
+  { name: "Netmeds", type: "Medicines" },
+  { name: "PVR", type: "Movies" },
+  { name: "College fees", type: "Education" },
+  { name: "School fees", type: "Education" },
+  { name: "MakeMyTrip", type: "Travel" },
+];
+
+const addTransaction = () => {
+  const transactions = [];
+  let sum = 0;
+  for (let k = 1; k < Math.floor(Math.random() * 8 + 1); k++) {
+    const vendorIndex = Math.floor(Math.random() * vendor.length);
+    const transaction = {
+      vendor: vendor[vendorIndex].name,
+      category: vendor[vendorIndex].type,
+      amount: Math.floor(Math.random() * 1000),
+      type: "Debit",
+    };
+    transactions.push(transaction);
+  }
+
+  transactions.forEach((item) => (sum += item.amount));
+
+  return { transactions: transactions, finalAmount: sum };
+};
 
 function isValidCreditCardNumber(cardNumber) {
   cardNumber = cardNumber.replace(/\D/g, "");
@@ -47,6 +80,64 @@ function getCreditCardIssuer(cardNumber) {
   }
 }
 
+const getCards = async (req, res, next) => {
+  const userId = req.userData.userId;
+  let cards;
+
+  try {
+    cards = await Card.find({ owner: userId });
+  } catch (err) {
+    const error = new HttpError(
+      "Fetching cards failed, please try again later",
+      500
+    );
+    return next(error);
+  }
+
+  if (!cards) {
+    return next(
+      new HttpError(
+        "Could not find cards linked to your account, let's add one now",
+        404
+      )
+    );
+  }
+
+  const lastBillGeneratedMonth = (card) => {
+    const monthNum =
+      card.statements[card.statements.length - 1].month[
+        card.statements[card.statements.length - 1].month.length - 1
+      ].month;
+    return parseInt(monthNum);
+  };
+
+  const lastBillGeneratedYear = (card) =>
+    card.statements[card.statements.length - 1].month;
+
+  const currentMonth = new Date().getMonth();
+
+  try {
+    const allPromises = cards.map(async (card) => {
+      if (lastBillGeneratedMonth(card) != currentMonth) {
+        const newTransaction = addTransaction();
+        lastBillGeneratedYear(card).push({
+          month: currentMonth,
+          transactions: newTransaction.transactions,
+        });
+        card.outstandingAmount = newTransaction.finalAmount;
+        return card.save();
+      }
+    });
+    await Promise.all(allPromises);
+  } catch (err) {
+    return next(err);
+  }
+
+  res.json({
+    cards: cards.map((card) => card.toObject({ getters: true }).id),
+  });
+};
+
 const addCard = async (req, res, next) => {
   const error = validationResult(req);
   if (!error.isEmpty()) {
@@ -63,12 +154,21 @@ const addCard = async (req, res, next) => {
     return next(error);
   }
 
+  const statementsData = statementGenerator();
+  console.log("DATA--->", statementsData);
+
   const newCard = new Card({
     name: name,
     expiry: expiry,
     number: number,
     owner: req.userData.userId,
+    limit: 100000,
+    statements: statementsData.data,
+    outstandingAmount: statementsData.outstandingAmount,
   });
+
+  console.log("card model--->", newCard);
+
   let user;
 
   try {
@@ -85,11 +185,65 @@ const addCard = async (req, res, next) => {
     await user.save({ session: sess });
     await sess.commitTransaction();
   } catch (err) {
-    const error = new HttpError("Adding place failed, please try again.");
-    return next(error);
+    const error = new HttpError(
+      "Adding card failed, please check your details and try again"
+    );
+    return next(err);
   }
 
   res.status(201).json({ card: getCreditCardIssuer(number) + " card added" });
 };
 
+const fetchStatement = async (req, res, next) => {
+  const id = req.params.id;
+  const year = req.params.year;
+  const month = req.params.month;
+
+  console.log("params-->", id, year, month);
+
+  let card;
+  try {
+    card = await Card.findById(id);
+  } catch (err) {
+    const error = new HttpError(
+      "Statement could not be fetched at this time, please try again later."
+    );
+    return next(error);
+  }
+
+  const statementYear = card.statements.find((arr) => arr.year == year);
+  console.log("statementYear-->", statementYear);
+  const statementMonth = statementYear.month.find((arr) => arr.month == month);
+  console.log("statementMonth-->", statementMonth);
+  const finalStatement = statementMonth.transactions;
+
+  res.status(201).json({ transactionsList: finalStatement });
+};
+
+const payBill = async (req, res, next) => {
+  const id = req.params.id;
+
+  const { amount } = req.body;
+
+  let card;
+  try {
+    card = await Card.findById(id);
+    if (!card) {
+      return next(new HttpError("Card not found", 422));
+    }
+
+    card.outstandingAmount -= amount;
+    card = await card.save();
+  } catch (err) {
+    return next(
+      new HttpError("Something went wrong, please try again later", 500)
+    );
+  }
+
+  res.status(200).json({ message: "Payment succesful", card: card.id });
+};
+
 exports.addCard = addCard;
+exports.getCards = getCards;
+exports.fetchStatement = fetchStatement;
+exports.payBill = payBill;

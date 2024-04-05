@@ -1,10 +1,19 @@
 const express = require("express");
 const router = express.Router();
 const { check } = require("express-validator");
-const { addCard } = require("../controllers/cardController");
+const {
+  addCard,
+  getCards,
+  fetchStatement,
+  payBill,
+} = require("../controllers/cardController");
+
 const auth = require("../middleware/auth");
 
 router.use(auth);
+
+router.get("/", getCards);
+router.get("/:id/statements/:year/:month", fetchStatement);
 
 router.post(
   "/add",
@@ -15,5 +24,7 @@ router.post(
   ],
   addCard
 );
+
+router.post("/:id/pay", payBill);
 
 module.exports = router;
