@@ -6,13 +6,15 @@ const {
   getCards,
   fetchStatement,
   payBill,
+  updateStatement,
+  deleteCard,
 } = require("../controllers/cardController");
 
 const auth = require("../middleware/auth");
 
-router.use(auth);
+router.get("/:id", getCards);
 
-router.get("/", getCards);
+router.use(auth);
 router.get("/:id/statements/:year/:month", fetchStatement);
 
 router.post(
@@ -20,11 +22,15 @@ router.post(
   [
     check("name").not().isEmpty(),
     check("expiry").not().isEmpty(),
-    check("number").isLuhnNumber(),
+    check("number").not().isEmpty(),
   ],
   addCard
 );
 
+router.post("/:id/statements/:year/:month", updateStatement);
+
 router.post("/:id/pay", payBill);
+
+router.delete("/:id/delete", deleteCard);
 
 module.exports = router;

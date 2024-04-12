@@ -20,7 +20,20 @@ const yearSchema = new Schema({
 });
 
 const cardSchema = new Schema({
-  name: { type: String, required: true },
+  name: {
+    type: String,
+    required: true,
+    validate: {
+      validator: function (value) {
+        const regex = /^[a-zA-Z ]*[a-zA-Z][a-zA-Z ]*$/;
+        if (regex.test(value)) {
+          return true;
+        } else return false;
+      },
+      message: (props) =>
+        `${props.path.name} must contain at least one alphabet`,
+    },
+  },
   expiry: {
     type: String,
     requried: true,

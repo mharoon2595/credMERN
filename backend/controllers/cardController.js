@@ -81,13 +81,13 @@ function getCreditCardIssuer(cardNumber) {
 }
 
 const getCards = async (req, res, next) => {
-  const userId = req.userData.userId;
+  const id = req.params.id;
   let cards;
 
-  console.log("UserId--->", userId);
+  console.log("UserId--->", id);
 
   try {
-    cards = await Card.find({ owner: userId });
+    cards = await Card.find({ owner: id });
   } catch (err) {
     const error = new HttpError(
       "Fetching cards failed, please try again later",
@@ -224,6 +224,46 @@ const fetchStatement = async (req, res, next) => {
   res.status(201).json({ transactionsList: finalStatement });
 };
 
+const updateStatement = async (req, res, next) => {
+  const id = req.params.id;
+  const year = req.params.year;
+  const month = req.params.month;
+
+  let { credit } = req.body;
+
+  console.log("params-->", id, year, month);
+
+  let card;
+  try {
+    card = await Card.findById(id);
+  } catch (err) {
+    const error = new HttpError(
+      "Statement could not be fetched at this time, please try again later."
+    );
+    return next(error);
+  }
+
+  const statementYear = card.statements.find((arr) => arr.year == year);
+  const statementMonth = statementYear.month.find((arr) => arr.month == month);
+  const finalStatement = statementMonth.transactions;
+
+  finalStatement.push(credit);
+  console.log("final credit--->", credit);
+
+  try {
+    await card.save();
+  } catch (err) {
+    return next(
+      new HttpError(
+        "Unable to update transactions list, please try again later",
+        500
+      )
+    );
+  }
+
+  res.status(201).json({ transactionsList: finalStatement });
+};
+
 const payBill = async (req, res, next) => {
   const id = req.params.id;
 
@@ -249,7 +289,41 @@ const payBill = async (req, res, next) => {
   res.status(200).json({ message: "Payment succesful", card: card.id });
 };
 
+const deleteCard = async (req, res, next) => {
+  const id = req.params.id;
+
+  console.log("HITTINGG!!!", id);
+
+  let card;
+  try {
+    card = await Card.findById(id).populate("owner");
+  } catch (err) {
+    return next(new HttpError(err.message, 500));
+  }
+
+  if (card.owner.id !== req.userData.userId) {
+    return next(new HttpError("You are not allowed to delete this card", 401));
+  }
+
+  try {
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+    await card.deleteOne({ session: sess });
+    await card.owner.cards.pull(card);
+    await card.owner.save({ session: sess });
+    await sess.commitTransaction();
+  } catch (err) {
+    return next(
+      new HttpError("Card couldn't be deleted, please try again later", 500)
+    );
+  }
+
+  res.status(200).json({ message: "Card deleted" });
+};
+
 exports.addCard = addCard;
 exports.getCards = getCards;
 exports.fetchStatement = fetchStatement;
 exports.payBill = payBill;
+exports.updateStatement = updateStatement;
+exports.deleteCard = deleteCard;

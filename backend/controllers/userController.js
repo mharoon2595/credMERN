@@ -51,6 +51,7 @@ const signup = async (req, res, next) => {
       "Unable to sign up right now, please try again later.",
       500
     );
+    return next(err);
   }
 
   let token;
@@ -63,6 +64,8 @@ const signup = async (req, res, next) => {
   } catch (err) {
     return next(new HttpError("Signing in failed, please try again", 500));
   }
+
+  console.log("HITTING SIGNUP");
 
   res
     .status(201)
