@@ -31,6 +31,12 @@ body{
 
 }
 
+.bgImage2{
+  background-image:url('./assets/minimalDark.jpg') ;
+  background-position: center;
+  background-size: cover;
+}
+
 .bgImage::after {
   content: ''; 
   position: absolute;

@@ -46,7 +46,7 @@ function getCreditCardIssuer(cardNumber) {
   }
 }
 
-const cardStyle = {
+export const cardStyle = {
   VISA: { style: "bg-gradient-to-r from-cyan-500 to-blue-500", image: VISA },
   MasterCard: {
     style: "bg-gradient-to-r from-red-600 via-orange-500 to-yellow-400",
@@ -92,20 +92,71 @@ const AddCard = () => {
   );
   const navigate = useNavigate();
   const auth = useContext(CardContext);
+  const [cardName, setCardName] = useState("");
+  const ref = useRef(0);
+  const checkRef = useRef(true);
+  const lengthRef = useRef(0);
 
   console.log(
     "EXPIRY----->",
     formState.inputs.month.value + "/" + formState.inputs.year.value
   );
 
+  console.log("ref--->", ref.current, lengthRef.current);
+  console.log("formState length--->", formState.inputs.number.value.length);
+
   const ccType = getCreditCardIssuer(formState.inputs.number.value);
 
+  if (!auth.token) {
+    console.log("aloaloaloooo");
+    navigate("/");
+  }
+
   useEffect(() => {
-    if (!auth.token) {
-      console.log("aloaloaloooo");
-      navigate("/");
+    if (
+      formState.inputs.number.value.length < lengthRef.current &&
+      formState.inputs.number.value != ""
+    ) {
+      setCardName((prevName) => {
+        let newName;
+        if (prevName.charAt(prevName.length - 1) === "-") {
+          newName = prevName.slice(0, -2);
+        } else {
+          newName = prevName.slice(0, -1);
+        }
+        lengthRef.current = formState.inputs.number.value.length;
+        return newName;
+      });
+    } else {
+      lengthRef.current = formState.inputs.number.value.length;
+      if (formState.inputs.number.value === "") {
+        setCardName("");
+        checkRef.current = true;
+        ref.current = 1;
+      } else if (ref.current === 1 && checkRef.current) {
+        checkRef.current = false;
+
+        setCardName((prevName) => prevName + "X");
+      } else if (ref.current % 4 !== 0 && cardName.length <= 14) {
+        setCardName((prevName) => prevName + "X");
+        ref.current++;
+      } else {
+        if (ref.current % 4 === 0 && cardName.length <= 14) {
+          cardName.length === 14
+            ? setCardName(
+                (prevName) =>
+                  prevName + "-" + formState.inputs.number.value.slice(-1)
+              )
+            : setCardName((prevName) => prevName + "-X");
+
+          cardName.length === 14 ? (ref.current = null) : (ref.current = 1);
+        } else if (cardName.length > 14 && cardName.length < 19) {
+          const number = formState.inputs.number.value;
+          setCardName((prevName) => prevName + number.slice(-1));
+        }
+      }
     }
-  }, []);
+  }, [formState.inputs.number.value]);
 
   const submitHandler = async (event) => {
     event.preventDefault();
@@ -134,7 +185,7 @@ const AddCard = () => {
         `You have successfully added your card!`,
         "success"
       );
-      navigate("/cards");
+      navigate(`/${auth.userId}/cards`);
     } catch (err) {
       await swal("Oops!", `${err.message}`, "error");
     }
@@ -143,97 +194,105 @@ const AddCard = () => {
   return (
     <>
       {" "}
-      <div className="flex flex-col items-center gap-2 p-4">
-        <AnimatePresence>
-          <motion.div
-            className={`w-[90%] sm:w-[60%] md:w-[40%] lg:w-[30%] 
+      <div className="min-h-[90%] bgImage2">
+        <div className="flex flex-col  items-center gap-2 p-4">
+          <AnimatePresence>
+            <motion.div
+              className={`w-[90%] sm:w-[60%] md:w-[40%] lg:w-[30%] 
               ${cardStyle[ccType].style}
               rounded-md relative h-52 p-2`}
-            initial={{ opacity: 0, x: "-100%" }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: "100%" }}
-            transition={{ type: "tween", duration: 0.5, ease: "easeOut" }}
-          >
-            <div className="absolute left-5 bottom-20 text-white">
-              Name: {formState.inputs.name.value}
-            </div>
-            <div className="absolute left-5 bottom-12 text-white">
-              Number: {formState.inputs.number.value}
-            </div>
-            <div className="absolute right-5 bottom-12 text-white">
-              Expiry: {formState.inputs.month.value}/
-              {formState.inputs.year.value}
-            </div>
-            {ccType !== "Unknown" && (
-              <img
-                src={cardStyle[ccType].image}
-                className="absolute right-5 top-5 w-[90px] h-15 object-cover"
-              ></img>
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </div>
-      <div className="flex flex-col items-center gap-2 p-4">
-        <div className="w-[90%] sm:w-[60%] md:w-[40%] lg:w-[30%] bg-slate-200 rounded-md p-2">
-          <div className="text-center">Card details</div>
-          <form onSubmit={submitHandler}>
-            <Input
-              id="name"
-              element="input"
-              type="text"
-              placeholder="Name on card"
-              label="Name"
-              errorText="This is a required field"
-              onInput={inputHandler}
-              validators={[VALIDATOR_REQUIRE()]}
-            />
-            <div className="font-bold">Expiry</div>
-            <div className="flex gap-2">
-              <>
-                <Input
-                  id="month"
-                  element="input"
-                  type="text"
-                  placeholder="MM"
-                  label="MM"
-                  errorText="This is a required field"
-                  onInput={inputHandler}
-                  validators={[VALIDATOR_MIN(1), VALIDATOR_MAX(12)]}
-                />
-                <Input
-                  id="year"
-                  element="input"
-                  type="text"
-                  placeholder="YY"
-                  label="YY"
-                  errorText="Enter a valid year"
-                  onInput={inputHandler}
-                  validators={[VALIDATOR_MIN(new Date().getFullYear() % 100)]}
-                />
-              </>
-            </div>
-            <Input
-              id="number"
-              element="input"
-              type="text"
-              placeholder="Card number"
-              label="Card number"
-              errorText="Needs to be 16 characters in length"
-              onInput={inputHandler}
-              validators={[VALIDATOR_MAXLENGTH(16), VALIDATOR_MINLENGTH(16)]}
-            />
-            <div className="flex justify-center">
-              <button
-                type="submit"
-                className={`bg-green-400  text-lg w-[50%] h-10 p-1 rounded-md my-4 ${
-                  formState.isValid ? "" : "opacity-30"
-                }`}
-                disabled={!formState.isValid}
-              >
-                Submit
-              </button>
-            </div>
-          </form>
+              initial={{ opacity: 0, x: "-100%" }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: "100%" }}
+              transition={{ type: "tween", duration: 0.5, ease: "easeOut" }}
+            >
+              <div className="absolute left-5 bottom-20 text-white">
+                Name: {formState.inputs.name.value}
+              </div>
+              <div className="absolute left-5 bottom-12 text-white">
+                Number: {cardName}
+              </div>
+              <div className="absolute left-5 bottom-5 text-white">
+                Expiry:{" "}
+                {formState.inputs.month.value === ""
+                  ? "MM"
+                  : formState.inputs.month.value}
+                /
+                {formState.inputs.year.value === ""
+                  ? "YY"
+                  : formState.inputs.year.value}
+              </div>
+              {ccType !== "Unknown" && (
+                <img
+                  src={cardStyle[ccType].image}
+                  className="absolute right-5 top-5 w-[90px] h-15 object-cover"
+                ></img>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+        <div className="flex flex-col items-center gap-2 p-4">
+          <div className="w-[90%] sm:w-[60%] md:w-[40%] lg:w-[30%] bg-slate-200 rounded-md p-2">
+            <div className="text-center">Card details</div>
+            <form onSubmit={submitHandler}>
+              <Input
+                id="name"
+                element="input"
+                type="text"
+                placeholder="Name on card"
+                label="Name"
+                errorText="This is a required field"
+                onInput={inputHandler}
+                validators={[VALIDATOR_REQUIRE()]}
+              />
+              <div className="font-bold">Expiry</div>
+              <div className="flex gap-2">
+                <>
+                  <Input
+                    id="month"
+                    element="input"
+                    type="text"
+                    placeholder="MM"
+                    label="MM"
+                    errorText="This is a required field"
+                    onInput={inputHandler}
+                    validators={[VALIDATOR_MIN(1), VALIDATOR_MAX(12)]}
+                  />
+                  <Input
+                    id="year"
+                    element="input"
+                    type="text"
+                    placeholder="YY"
+                    label="YY"
+                    errorText="Enter a valid year"
+                    onInput={inputHandler}
+                    validators={[VALIDATOR_MIN(new Date().getFullYear() % 100)]}
+                  />
+                </>
+              </div>
+              <Input
+                id="number"
+                element="input"
+                type="text"
+                placeholder="Card number"
+                label="Card number"
+                errorText="Needs to be 16 characters in length"
+                onInput={inputHandler}
+                validators={[VALIDATOR_MAXLENGTH(16), VALIDATOR_MINLENGTH(16)]}
+              />
+              <div className="flex justify-center">
+                <button
+                  type="submit"
+                  className={`bg-green-400  text-lg w-[50%] h-10 p-1 rounded-md my-4 ${
+                    formState.isValid ? "" : "opacity-30"
+                  }`}
+                  disabled={!formState.isValid}
+                >
+                  Submit
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </>

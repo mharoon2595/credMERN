@@ -15,6 +15,10 @@ const Signup = () => {
   const submitHandler = async (event) => {
     event.preventDefault();
     try {
+      if (formState.inputs.password.value !== formState.inputs.confirm.value) {
+        swal("Oops!", "Passwords do not match", "error");
+        return;
+      }
       const data = await fetch("http://localhost:8000/users/signup", {
         method: "POST",
         headers: { "Content-type": "application/json" },
@@ -31,6 +35,7 @@ const Signup = () => {
         return;
       }
       const res = await data.json();
+      console.log("RES FROM SIGNUP--->", res);
       navigate("/login");
       await swal("Alright", "Account created, please login now", "success");
     } catch (err) {
@@ -52,6 +57,10 @@ const Signup = () => {
         value: "",
         isValid: false,
       },
+      confirm: {
+        value: "",
+        isValid: false,
+      },
     },
     false
   );
@@ -68,9 +77,9 @@ const Signup = () => {
               type="text"
               placeholder="Name"
               label="Name"
-              errorText="Please type in a password with atleast 8 characters"
+              errorText="Please type in your name"
               onInput={inputHandler}
-              validators={[VALIDATOR_REQUIRE]}
+              validators={[VALIDATOR_REQUIRE()]}
             />
           </div>
           <div className="flex flex-col p-2">
@@ -92,6 +101,18 @@ const Signup = () => {
               type="password"
               placeholder="Password"
               label="Password"
+              errorText="Please type in a password with atleast 8 characters"
+              onInput={inputHandler}
+              validators={[VALIDATOR_MINLENGTH(8)]}
+            />
+          </div>
+          <div className="flex flex-col p-2">
+            <Input
+              id="confirm"
+              element="input"
+              type="password"
+              placeholder="Confirm password"
+              label="Confirm password"
               errorText="Please type in a password with atleast 8 characters"
               onInput={inputHandler}
               validators={[VALIDATOR_MINLENGTH(8)]}

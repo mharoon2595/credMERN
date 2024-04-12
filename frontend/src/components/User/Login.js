@@ -44,9 +44,9 @@ const Login = () => {
         return;
       }
       const res = await fetchData.json();
-      auth.login(res.token);
+      auth.login(res.token, res.name, res.userId, null);
       await swal("Logged in", `You can add/view your cards now`, "success");
-      navigate("/cards");
+      navigate(`/${res.userId}/cards`);
     } catch (err) {
       await swal("Oops!", `${err.message}`, "error");
     }
@@ -85,7 +85,7 @@ const Login = () => {
           <div className="flex justify-center ">
             <button
               type="submit"
-              className={`bg-green-400 text-lg w-[50%] h-10 p-1 rounded-md my-4 ${
+              className={`bg-green-400 text-lg  h-10 p-1 rounded-md my-4 ${
                 formState.isValid ? "" : "opacity-30"
               }`}
               disabled={!formState.isValid}

@@ -42,6 +42,14 @@ const Input = (props) => {
     });
   };
 
+  const handleCopy = (event) => {
+    event.preventDefault();
+  };
+
+  const handlePaste = (event) => {
+    event.preventDefault();
+  };
+
   const touchHandler = () => {
     dispatch({
       type: "TOUCH",
@@ -56,6 +64,8 @@ const Input = (props) => {
         placeholder={props.placeholder}
         onChange={changeHandler}
         onBlur={touchHandler}
+        onCopy={handleCopy}
+        onPaste={handlePaste}
         value={inputState.value}
       />
     ) : (

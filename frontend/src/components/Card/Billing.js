@@ -24,6 +24,19 @@ const Billing = () => {
   const auth = useContext(CardContext);
 
   console.log("statements--->", auth.cardDetails);
+
+  // useEffect(() => {
+  //   const statements = auth.cardDetails.statement;
+  //   console.log("STATEMENTS--->", statements);
+  //   const obtainFinalYear = statements.pop();
+  //   console.log("STATEMENTS--->", obtainFinalYear);
+  //   const finalYear = obtainFinalYear.year;
+  //   const obtainFinalMonth = obtainFinalYear.month.pop();
+  //   const finalMonth = obtainFinalMonth.month;
+
+  //   console.log("final year and month--->", finalMonth, finalYear);
+  // }, []);
+
   useEffect(() => {
     if (!auth.token) {
       navigate("/");
@@ -51,12 +64,37 @@ const Billing = () => {
         await swal("Oops", errorMessage.message, "error");
         return;
       }
+      const secondFetch = await fetch(
+        `http://localhost:8000/cards/${auth.cardDetails.id}/statements/${auth.monthAndYear.year}/${auth.monthAndYear.month}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-type": "application/json",
+            Authorization: "Bearer " + auth.token,
+          },
+          body: JSON.stringify({
+            credit: {
+              vendor: "Credit",
+              category: "Credit",
+              type: "Credit",
+              amount: formState.inputs.amount.value,
+            },
+          }),
+        }
+      );
+      if (!secondFetch.ok) {
+        const errorMessage = await secondFetch.json();
+        await swal("Oops", errorMessage.message, "error");
+        return;
+      }
+
       auth.addStatement([], "", "", "");
       await swal(
         "Thank you",
-        `You have successfully paid $${formState.inputs.amount.value}`,
+        `You have successfully paid ₹${formState.inputs.amount.value}`,
         "success"
       );
+
       navigate("/cards");
     } catch (err) {
       await swal("Oops!", `${err.message}`, "error");

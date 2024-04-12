@@ -37,7 +37,15 @@ export const Statement = () => {
             <div className="bg-slate-200 p-2 rounded-md my-2 relative">
               <div>Vendor: {item.vendor}</div>
               <div>Category: {item.category}</div>
-              <div>Type: {item.type}</div>
+              <div
+                className={
+                  item.type === "Credit"
+                    ? "text-green-500 font-semibold"
+                    : "text-red-500 font-semibold"
+                }
+              >
+                Type: {item.type}
+              </div>
               <div className="absolute right-5 bottom-2 font-bold">
                 Amount: ₹{item.amount}
               </div>
