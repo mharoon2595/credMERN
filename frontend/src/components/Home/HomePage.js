@@ -12,9 +12,7 @@ const HomePage = () => {
   };
 
   useEffect(() => {
-    console.log("yooooo");
     if (!!auth.token) {
-      console.log("executed budd");
       auth.logout();
     }
   }, [auth.token]);

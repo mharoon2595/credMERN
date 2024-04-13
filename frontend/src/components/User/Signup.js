@@ -19,15 +19,18 @@ const Signup = () => {
         swal("Oops!", "Passwords do not match", "error");
         return;
       }
-      const data = await fetch("http://localhost:8000/users/signup", {
-        method: "POST",
-        headers: { "Content-type": "application/json" },
-        body: JSON.stringify({
-          name: formState.inputs.name.value,
-          email: formState.inputs.email.value,
-          password: formState.inputs.password.value,
-        }),
-      });
+      const data = await fetch(
+        "https://cloudy-jumper-ox.cyclic.app/users/signup",
+        {
+          method: "POST",
+          headers: { "Content-type": "application/json" },
+          body: JSON.stringify({
+            name: formState.inputs.name.value,
+            email: formState.inputs.email.value,
+            password: formState.inputs.password.value,
+          }),
+        }
+      );
 
       if (!data.ok) {
         const errorMessage = await data.json();
@@ -35,7 +38,6 @@ const Signup = () => {
         return;
       }
       const res = await data.json();
-      console.log("RES FROM SIGNUP--->", res);
       navigate("/login");
       await swal("Alright", "Account created, please login now", "success");
     } catch (err) {

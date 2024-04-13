@@ -69,7 +69,9 @@ function App() {
   const logout = useCallback(() => {
     setToken(null);
     setName(null);
+    setUserId(null);
     setExpirationTime(null);
+    setStatement(null);
     localStorage.removeItem("userData");
   }, []);
 

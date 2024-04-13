@@ -35,8 +35,6 @@ const CardStructure = (props) => {
 
   const { name, number, type, statements, outstandingAmount, id } = props.card;
 
-  console.log("CARD STYLE--->", cardStyle[type]);
-
   const cardDetails =
     type +
     " " +
@@ -62,7 +60,7 @@ const CardStructure = (props) => {
   const deleteHandler = async () => {
     try {
       const deleteItem = await fetch(
-        `http://localhost:8000/cards/${id}/delete`,
+        `https://cloudy-jumper-ox.cyclic.app/cards/${id}/delete`,
         {
           method: "DELETE",
           headers: {
@@ -94,7 +92,7 @@ const CardStructure = (props) => {
     const fetchStatement = async () => {
       try {
         const sendData = await fetch(
-          `http://localhost:8000/cards/${id}/statements/${selectedYear}/${selectedMonth}`,
+          `https://cloudy-jumper-ox.cyclic.app/cards/${id}/statements/${selectedYear}/${selectedMonth}`,
           {
             headers: { Authorization: "Bearer " + auth.token },
           }
@@ -167,7 +165,9 @@ const CardStructure = (props) => {
                   className="border border-black"
                 >
                   {statements.map((item) => (
-                    <option value={item.year}>{item.year}</option>
+                    <option key={item._id} value={item.year}>
+                      {item.year}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -182,7 +182,9 @@ const CardStructure = (props) => {
                       className="border border-black"
                     >
                       {monthsIfCurrentYear().map((item) => (
-                        <option value={item}>{item}</option>
+                        <option key={item._id} value={item}>
+                          {item}
+                        </option>
                       ))}
                     </select>
                   </>
@@ -196,7 +198,9 @@ const CardStructure = (props) => {
                       onChange={(event) => setChosenMonth(event.target.value)}
                     >
                       {months.map((item) => (
-                        <option value={item}>{item}</option>
+                        <option key={item._id} value={item}>
+                          {item}
+                        </option>
                       ))}
                     </select>
                   </>

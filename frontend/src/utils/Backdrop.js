@@ -1,10 +1,12 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-const Backdrop = ({ onClick }) => {
+const Backdrop = ({ onClick, screenWidth }) => {
   const backdrop = (
     <div
-      className="fixed z-50 bg-slate-600 opacity-80 w-full h-full sm:hidden"
+      className={`fixed z-50 bg-slate-600 opacity-80 w-full h-full ${
+        screenWidth ? "sm:hidden" : ""
+      }`}
       onClick={onClick}
     ></div>
   );

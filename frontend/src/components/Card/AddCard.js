@@ -161,20 +161,23 @@ const AddCard = () => {
   const submitHandler = async (event) => {
     event.preventDefault();
     try {
-      const sentData = await fetch("http://localhost:8000/cards/add", {
-        method: "POST",
-        headers: {
-          "Content-type": "application/json",
-          Authorization: "Bearer " + auth.token,
-        },
-        body: JSON.stringify({
-          name: formState.inputs.name.value,
-          expiry:
-            formState.inputs.month.value + "/" + formState.inputs.year.value,
-          number: formState.inputs.number.value,
-          type: ccType,
-        }),
-      });
+      const sentData = await fetch(
+        "https://cloudy-jumper-ox.cyclic.app/cards/add",
+        {
+          method: "POST",
+          headers: {
+            "Content-type": "application/json",
+            Authorization: "Bearer " + auth.token,
+          },
+          body: JSON.stringify({
+            name: formState.inputs.name.value,
+            expiry:
+              formState.inputs.month.value + "/" + formState.inputs.year.value,
+            number: formState.inputs.number.value,
+            type: ccType,
+          }),
+        }
+      );
       if (!sentData.ok) {
         const errorMessage = await sentData.json();
         await swal("Uh-oh!", errorMessage.message, "error");

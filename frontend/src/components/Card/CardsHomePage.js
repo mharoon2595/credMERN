@@ -12,11 +12,12 @@ const CardsHomePage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log("auth---->", auth.token);
     const fetchData = async () => {
       try {
-        const data = await fetch(`http://localhost:8000/cards/${id}`);
-        console.log("response--->", data);
+        const data = await fetch(
+          `https://cloudy-jumper-ox.cyclic.app/cards/${id}`
+        );
+
         const res = await data.json();
         setCards(res.cards);
         setIsLoading(false);
@@ -51,9 +52,14 @@ const CardsHomePage = () => {
       ) : (
         <div className="min-h-[90%] bgImage2 flex flex-col items-center p-2">
           {!cards || cards.length === 0 ? (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 bg-slate-400 p-6 rounded-md ">
               <div>No cards found</div>
-              <button className="bg-green-500 rounded-md p-2">
+              <button
+                className="bg-green-500 rounded-md p-2"
+                onClick={() => {
+                  navigate("/add");
+                }}
+              >
                 Add one now
               </button>
             </div>

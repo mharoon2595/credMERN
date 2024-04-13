@@ -23,20 +23,6 @@ const Billing = () => {
   const navigate = useNavigate();
   const auth = useContext(CardContext);
 
-  console.log("statements--->", auth.cardDetails);
-
-  // useEffect(() => {
-  //   const statements = auth.cardDetails.statement;
-  //   console.log("STATEMENTS--->", statements);
-  //   const obtainFinalYear = statements.pop();
-  //   console.log("STATEMENTS--->", obtainFinalYear);
-  //   const finalYear = obtainFinalYear.year;
-  //   const obtainFinalMonth = obtainFinalYear.month.pop();
-  //   const finalMonth = obtainFinalMonth.month;
-
-  //   console.log("final year and month--->", finalMonth, finalYear);
-  // }, []);
-
   useEffect(() => {
     if (!auth.token) {
       navigate("/");
@@ -47,7 +33,7 @@ const Billing = () => {
     event.preventDefault();
     try {
       const sentData = await fetch(
-        `http://localhost:8000/cards/${auth.cardDetails.id}/pay`,
+        `https://cloudy-jumper-ox.cyclic.app/cards/${auth.cardDetails.id}/pay`,
         {
           method: "POST",
           headers: {
@@ -65,7 +51,7 @@ const Billing = () => {
         return;
       }
       const secondFetch = await fetch(
-        `http://localhost:8000/cards/${auth.cardDetails.id}/statements/${auth.monthAndYear.year}/${auth.monthAndYear.month}`,
+        `https://cloudy-jumper-ox.cyclic.app/cards/${auth.cardDetails.id}/statements/${auth.monthAndYear.year}/${auth.monthAndYear.month}`,
         {
           method: "POST",
           headers: {
@@ -95,7 +81,7 @@ const Billing = () => {
         "success"
       );
 
-      navigate("/cards");
+      navigate(`/${auth.userId}/cards`);
     } catch (err) {
       await swal("Oops!", `${err.message}`, "error");
     }

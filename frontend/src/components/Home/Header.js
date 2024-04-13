@@ -49,7 +49,11 @@ const Header = () => {
                 src={logo}
                 alt="companyLogo"
                 className="w-32 md:w-40 h-[90%] sm:h-full my-auto cursor-pointer"
-                onClick={() => navigate(`${auth.userId}/cards`)}
+                onClick={() => {
+                  auth.userId
+                    ? navigate(`${auth.userId}/cards`)
+                    : navigate("/");
+                }}
               />
               <div className="hidden sm:flex gap-2 my-auto">
                 <NavLink
@@ -154,7 +158,7 @@ const Header = () => {
                 </div>
               </div>
 
-              {showSidebar && <Backdrop onClick={closeSidebar} />}
+              {showSidebar && <Backdrop onClick={closeSidebar} screenWidth />}
               {showSidebar && (
                 <motion.div
                   initial={{ opacity: 0, x: -50 }}
@@ -199,7 +203,16 @@ const Header = () => {
             </>
           ) : (
             <>
-              <img src={logo} alt="companyLogo" className="w-15 h-10 my-auto" />
+              <img
+                src={logo}
+                alt="companyLogo"
+                className="w-15 h-10 my-auto cursor-pointer"
+                onClick={() => {
+                  auth.userId
+                    ? navigate(`${auth.userId}/cards`)
+                    : navigate("/");
+                }}
+              />
               <NavLink
                 to="/login"
                 className={({ isActive }) =>
